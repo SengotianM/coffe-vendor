@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ import com.coffevendor.data.model.SugarOption
 fun BeveragePickerScreen(
     onBeverageSelected: (Beverage, SugarOption) -> Unit,
     onBack: () -> Unit,
+    onSettingsClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var selectedSugar by remember { mutableStateOf(SugarOption.WITH_SUGAR) }
@@ -36,6 +38,11 @@ fun BeveragePickerScreen(
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.Default.ArrowBack, "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Default.Settings, "Settings")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

@@ -4,11 +4,12 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [BeverageEntity::class, OrderEntity::class],
-    version = 1,
+    entities = [BeverageEntity::class, OrderEntity::class, UserEntity::class],
+    version = 2,
     exportSchema = false
 )
 abstract class CoffeeDatabase : RoomDatabase() {
     abstract fun beverageDao(): BeverageDao
     abstract fun orderDao(): OrderDao
+    abstract fun userDao(): UserDao
 }
