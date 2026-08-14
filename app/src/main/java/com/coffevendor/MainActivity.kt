@@ -6,9 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import com.coffevendor.ui.orderconfig.OrderConfigScreen
 import com.coffevendor.data.model.*
+import com.coffevendor.ui.beverages.BeveragePickerScreen
+import com.coffevendor.ui.orderconfig.OrderConfigScreen
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -21,23 +23,30 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val sampleBeverage = Beverage(
-                        id = "1",
-                        name = "Espresso",
-                        description = "Rich, bold single-shot espresso",
-                        price = 3.50,
-                        imageUrl = "https://example.com/espresso.jpg",
-                        ingredients = listOf("Coffee beans", "Water"),
-                        category = BeverageCategory.COFFEE
-                    )
+                    var selectedBeverage by remember { mutableStateOf<Beverage?>(null) }
+                    var selectedSugar by remember { mutableStateOf(SugarOption.WITH_SUGAR) }
 
-                    OrderConfigScreen(
-                        beverage = sampleBeverage,
-                        onBack = { finish() },
-                        onOrderPlaced = { request ->
-                            // TODO: Navigate to confirmation or call ViewModel
+                    when {
+                        selectedBeverage == null -> {
+                            BeveragePickerScreen(
+                                onBeverageSelected = { beverage, sugar ->
+                                    selectedBeverage = beverage
+                                    selectedSugar = sugar
+                                },
+                                onBack = { finish() }
+                            )
                         }
-                    )
+                        else -> {
+                            OrderConfigScreen(
+                                beverage = selectedBeverage!!,
+                                sugarOption = selectedSugar,
+                                onBack = { selectedBeverage = null },
+                                onOrderPlaced = { request ->
+                                    // TODO: Show confirmation or call ViewModel
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }

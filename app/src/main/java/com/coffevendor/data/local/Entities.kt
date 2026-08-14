@@ -12,6 +12,8 @@ data class BeverageEntity(
     val imageUrl: String,
     val ingredients: String,
     val category: String,
+    val drawableRes: String,
+    val hasSugarOption: Boolean,
     val isAvailable: Boolean
 )
 
@@ -39,6 +41,8 @@ fun Beverage.toEntity(): BeverageEntity = BeverageEntity(
     imageUrl = imageUrl,
     ingredients = ingredients.joinToString(","),
     category = category.name,
+    drawableRes = drawableRes,
+    hasSugarOption = hasSugarOption,
     isAvailable = isAvailable
 )
 
@@ -50,6 +54,8 @@ fun BeverageEntity.toDomain(): Beverage = Beverage(
     imageUrl = imageUrl,
     ingredients = ingredients.split(",").filter { it.isNotBlank() },
     category = BeverageCategory.valueOf(category),
+    drawableRes = drawableRes,
+    hasSugarOption = hasSugarOption,
     isAvailable = isAvailable
 )
 

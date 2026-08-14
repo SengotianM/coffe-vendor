@@ -27,6 +27,7 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun OrderConfigScreen(
     beverage: Beverage,
+    sugarOption: SugarOption = SugarOption.WITH_SUGAR,
     onBack: () -> Unit,
     onOrderPlaced: (CreateOrderRequest) -> Unit,
     modifier: Modifier = Modifier
@@ -71,7 +72,7 @@ fun OrderConfigScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            BeverageSummaryCard(beverage = beverage, quantity = quantity, onQuantityChange = { quantity = it })
+            BeverageSummaryCard(beverage = beverage, sugarOption = sugarOption, quantity = quantity, onQuantityChange = { quantity = it })
 
             Divider()
 
@@ -168,6 +169,7 @@ fun OrderConfigScreen(
 @Composable
 private fun BeverageSummaryCard(
     beverage: Beverage,
+    sugarOption: SugarOption,
     quantity: Int,
     onQuantityChange: (Int) -> Unit
 ) {
@@ -190,7 +192,11 @@ private fun BeverageSummaryCard(
                     style = MaterialTheme.typography.titleLarge
                 )
                 Text(
-                    text = beverage.description,
+                    text = if (beverage.hasSugarOption) {
+                        "${beverage.description} - ${if (sugarOption == SugarOption.WITH_SUGAR) "With Sugar" else "Without Sugar"}"
+                    } else {
+                        beverage.description
+                    },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
