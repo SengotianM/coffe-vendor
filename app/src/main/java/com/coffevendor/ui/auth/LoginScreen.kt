@@ -46,6 +46,22 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
 
+    private val _shouldAutoBiometric = MutableStateFlow(false)
+    val shouldAutoBiometric: StateFlow<Boolean> = _shouldAutoBiometric.asStateFlow()
+
+    init {
+        checkBiometricEnabled()
+    }
+
+    private fun checkBiometricEnabled() {
+        viewModelScope.launch {
+            val user = userDao.getLoggedInUser()
+            if (user != null && user.isBiometricEnabled) {
+                _shouldAutoBiometric.value = true
+            }
+        }
+    }
+
     fun login(userId: String, password: String) {
         viewModelScope.launch {
             _uiState.value = LoginUiState.Loading
@@ -103,6 +119,10 @@ class LoginViewModel @Inject constructor(
         }
     }
 
+    fun onBiometricPromptShown() {
+        _shouldAutoBiometric.value = false
+    }
+
     fun resetState() {
         _uiState.value = LoginUiState.Idle
     }
@@ -121,10 +141,18 @@ fun LoginScreen(
     var userId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val uiState by loginViewModel.uiState.collectAsState()
+    val shouldAutoBiometric by loginViewModel.shouldAutoBiometric.collectAsState()
 
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
             onLoginSuccess((uiState as LoginUiState.Success).username)
+        }
+    }
+
+    LaunchedEffect(shouldAutoBiometric) {
+        if (shouldAutoBiometric && activity != null) {
+            loginViewModel.onBiometricPromptShown()
+            loginViewModel.biometricLogin(activity)
         }
     }
 

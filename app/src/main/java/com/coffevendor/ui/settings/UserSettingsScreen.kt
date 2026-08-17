@@ -49,6 +49,9 @@ class SettingsViewModel @Inject constructor(
     private val _favorites = MutableStateFlow<List<String>>(emptyList())
     val favorites: StateFlow<List<String>> = _favorites.asStateFlow()
 
+    private val _biometricEnabled = MutableStateFlow(false)
+    val biometricEnabled: StateFlow<Boolean> = _biometricEnabled.asStateFlow()
+
     init {
         loadUser()
     }
@@ -59,7 +62,17 @@ class SettingsViewModel @Inject constructor(
             if (user != null) {
                 _currentUser.value = user.toDomain()
                 _favorites.value = user.toDomain().favoriteBeverages
+                _biometricEnabled.value = user.isBiometricEnabled
             }
+        }
+    }
+
+    fun toggleBiometric(enabled: Boolean) {
+        viewModelScope.launch {
+            val user = _currentUser.value ?: return@launch
+            userDao.updateBiometricStatus(user.id, enabled)
+            _biometricEnabled.value = enabled
+            _currentUser.value = user.copy(isBiometricEnabled = enabled)
         }
     }
 
@@ -119,6 +132,7 @@ fun UserSettingsScreen(
     val settingsViewModel: SettingsViewModel = hiltViewModel()
     val currentUser by settingsViewModel.currentUser.collectAsState()
     val favorites by settingsViewModel.favorites.collectAsState()
+    val biometricEnabled by settingsViewModel.biometricEnabled.collectAsState()
 
     val photoLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -227,6 +241,43 @@ fun UserSettingsScreen(
                         ProfileDetailRow("Employee ID", currentUser?.empId ?: "")
                         ProfileDetailRow("Seat Number", currentUser?.seatNumber ?: "")
                         ProfileDetailRow("Mobile", currentUser?.mobileNumber ?: "")
+                    }
+                }
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Fingerprint,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column {
+                                Text(
+                                    text = "Biometric Login",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Text(
+                                    text = "Use fingerprint to login",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Switch(
+                            checked = biometricEnabled,
+                            onCheckedChange = { settingsViewModel.toggleBiometric(it) }
+                        )
                     }
                 }
             }
