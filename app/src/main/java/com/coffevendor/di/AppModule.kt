@@ -11,6 +11,7 @@ import com.coffevendor.data.local.OrderDao
 import com.coffevendor.data.local.UserDao
 import com.coffevendor.data.remote.ApiClient
 import com.coffevendor.data.remote.CoffeeApiService
+import com.coffevendor.data.remote.SupabaseRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -98,5 +99,15 @@ object AppModule {
     @Singleton
     fun provideApiService(): CoffeeApiService {
         return ApiClient.apiService
+    }
+
+    @Provides
+    @Singleton
+    fun provideSupabaseRepository(
+        beverageDao: BeverageDao,
+        orderDao: OrderDao,
+        userDao: UserDao
+    ): SupabaseRepository {
+        return SupabaseRepository(beverageDao, orderDao, userDao)
     }
 }

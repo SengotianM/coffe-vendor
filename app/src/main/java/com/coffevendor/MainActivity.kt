@@ -12,6 +12,7 @@ import com.coffevendor.data.local.OrderDao
 import com.coffevendor.data.local.UserDao
 import com.coffevendor.data.local.toEntity
 import com.coffevendor.data.model.*
+import com.coffevendor.data.remote.SupabaseRepository
 import com.coffevendor.ui.auth.LoginScreen
 import com.coffevendor.ui.auth.SignUpScreen
 import com.coffevendor.ui.beverages.BeveragePickerScreen
@@ -31,6 +32,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var orderDao: OrderDao
     @Inject lateinit var userDao: UserDao
+    @Inject lateinit var repository: SupabaseRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +42,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AppNavigation(orderDao = orderDao, userDao = userDao)
+                    AppNavigation(orderDao = orderDao, userDao = userDao, repository = repository)
                 }
             }
         }
@@ -60,8 +62,9 @@ enum class Screen {
 
 @Composable
 fun AppNavigation(
-    orderDao: OrderDao,
-    @Suppress("UNUSED_PARAMETER") userDao: UserDao
+    @Suppress("UNUSED_PARAMETER") orderDao: OrderDao,
+    @Suppress("UNUSED_PARAMETER") userDao: UserDao,
+    repository: SupabaseRepository
 ) {
     var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
     var selectedBeverage by remember { mutableStateOf<Beverage?>(null) }
@@ -140,7 +143,7 @@ fun AppNavigation(
                         specialInstructions = request.specialInstructions
                     )
                     coroutineScope.launch {
-                        orderDao.insert(order.toEntity())
+                        repository.pushOrder(order)
                     }
                     currentScreen = Screen.DASHBOARD
                 }

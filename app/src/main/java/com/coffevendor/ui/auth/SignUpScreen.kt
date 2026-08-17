@@ -22,6 +22,7 @@ import androidx.lifecycle.viewModelScope
 import com.coffevendor.data.local.UserDao
 import com.coffevendor.data.local.toEntity
 import com.coffevendor.data.model.User
+import com.coffevendor.data.remote.SupabaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,7 +40,8 @@ sealed class SignUpUiState {
 
 @HiltViewModel
 class SignUpViewModel @Inject constructor(
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val repository: SupabaseRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SignUpUiState>(SignUpUiState.Idle)
@@ -101,8 +103,12 @@ class SignUpViewModel @Inject constructor(
                 password = password
             )
 
-            userDao.insert(user.toEntity())
-            _uiState.value = SignUpUiState.SignUpSuccess
+            val success = repository.signUp(user.userId, user.password)
+            if (success) {
+                _uiState.value = SignUpUiState.SignUpSuccess
+            } else {
+                _uiState.value = SignUpUiState.Error("Sign up failed")
+            }
         }
     }
 

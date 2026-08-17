@@ -21,6 +21,7 @@ import com.coffevendor.data.local.OrderDao
 import com.coffevendor.data.local.toDomain
 import com.coffevendor.data.model.OrderStatus
 import com.coffevendor.data.model.RecurrenceType
+import com.coffevendor.data.remote.SupabaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -39,7 +40,8 @@ data class VendorOrder(
 
 @HiltViewModel
 class VendorDashboardViewModel @Inject constructor(
-    private val orderDao: OrderDao
+    private val orderDao: OrderDao,
+    private val repository: SupabaseRepository
 ) : ViewModel() {
 
     private val _orders = MutableStateFlow<List<VendorOrder>>(emptyList())
@@ -47,6 +49,7 @@ class VendorDashboardViewModel @Inject constructor(
 
     init {
         loadOrders()
+        syncFromRemote()
     }
 
     private fun loadOrders() {
@@ -73,19 +76,25 @@ class VendorDashboardViewModel @Inject constructor(
 
     fun acceptOrder(orderId: String) {
         viewModelScope.launch {
-            orderDao.updateStatus(orderId, OrderStatus.PREPARING.name)
+            repository.updateOrderStatusRemote(orderId, OrderStatus.PREPARING)
         }
     }
 
     fun deliverOrder(orderId: String) {
         viewModelScope.launch {
-            orderDao.updateStatus(orderId, OrderStatus.OUT_FOR_DELIVERY.name)
+            repository.updateOrderStatusRemote(orderId, OrderStatus.OUT_FOR_DELIVERY)
         }
     }
 
     fun rejectOrder(orderId: String) {
         viewModelScope.launch {
-            orderDao.updateStatus(orderId, OrderStatus.CANCELLED.name)
+            repository.updateOrderStatusRemote(orderId, OrderStatus.CANCELLED)
+        }
+    }
+
+    private fun syncFromRemote() {
+        viewModelScope.launch {
+            repository.syncOrdersFromRemote()
         }
     }
 }

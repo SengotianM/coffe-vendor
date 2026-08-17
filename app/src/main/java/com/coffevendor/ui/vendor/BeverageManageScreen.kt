@@ -22,6 +22,7 @@ import com.coffevendor.data.local.toEntity
 import com.coffevendor.data.model.Beverage
 import com.coffevendor.data.model.BeverageCategory
 import com.coffevendor.data.model.BeverageData
+import com.coffevendor.data.remote.SupabaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -29,7 +30,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BeverageManageViewModel @Inject constructor(
-    private val beverageDao: BeverageDao
+    private val beverageDao: BeverageDao,
+    private val repository: SupabaseRepository
 ) : ViewModel() {
 
     private val _beverages = MutableStateFlow<List<Beverage>>(emptyList())
@@ -37,6 +39,7 @@ class BeverageManageViewModel @Inject constructor(
 
     init {
         loadBeverages()
+        syncFromRemote()
     }
 
     private fun loadBeverages() {
@@ -49,25 +52,33 @@ class BeverageManageViewModel @Inject constructor(
 
     fun toggleAvailability(beverage: Beverage) {
         viewModelScope.launch {
-            beverageDao.updateAvailability(beverage.id, !beverage.isAvailable)
+            repository.toggleBeverageAvailabilityRemote(beverage.id, !beverage.isAvailable)
         }
     }
 
     fun deleteBeverage(beverage: Beverage) {
         viewModelScope.launch {
-            beverageDao.deleteById(beverage.id)
+            repository.deleteBeverageRemote(beverage.id)
         }
     }
 
     fun addBeverage(beverage: Beverage) {
         viewModelScope.launch {
-            beverageDao.insert(beverage.toEntity())
+            repository.pushBeverage(beverage)
         }
     }
 
     fun seedBeverages() {
         viewModelScope.launch {
-            beverageDao.insertAll(BeverageData.beverages.map { it.toEntity() })
+            BeverageData.beverages.forEach { beverage ->
+                repository.pushBeverage(beverage)
+            }
+        }
+    }
+
+    private fun syncFromRemote() {
+        viewModelScope.launch {
+            repository.syncBeveragesFromRemote()
         }
     }
 }
