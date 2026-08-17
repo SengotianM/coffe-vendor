@@ -20,6 +20,7 @@ data class BeverageEntity(
 @Entity(tableName = "orders")
 data class OrderEntity(
     @PrimaryKey val id: String,
+    val userId: String,
     val beverageId: String,
     val beverageName: String,
     val quantity: Int,
@@ -61,6 +62,7 @@ fun BeverageEntity.toDomain(): Beverage = Beverage(
 
 fun Order.toEntity(): OrderEntity = OrderEntity(
     id = id,
+    userId = userId,
     beverageId = beverageId,
     beverageName = beverageName,
     quantity = quantity,
@@ -76,6 +78,7 @@ fun Order.toEntity(): OrderEntity = OrderEntity(
 
 fun OrderEntity.toDomain(): Order = Order(
     id = id,
+    userId = userId,
     beverageId = beverageId,
     beverageName = beverageName,
     quantity = quantity,

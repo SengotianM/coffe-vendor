@@ -165,12 +165,6 @@ private fun BeverageCard(
                 textAlign = TextAlign.Center,
                 maxLines = 2
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "$${String.format("%.0f", beverage.price)}",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary
-            )
         }
     }
 }

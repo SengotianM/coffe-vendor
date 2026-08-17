@@ -34,7 +34,7 @@ import javax.inject.Inject
 sealed class LoginUiState {
     data object Idle : LoginUiState()
     data object Loading : LoginUiState()
-    data class Success(val username: String) : LoginUiState()
+    data class Success(val username: String, val userId: String) : LoginUiState()
     data class Error(val message: String) : LoginUiState()
 }
 
@@ -83,7 +83,7 @@ class LoginViewModel @Inject constructor(
             }
 
             userDao.updateLoginStatus(user.id, true)
-            _uiState.value = LoginUiState.Success(user.username)
+            _uiState.value = LoginUiState.Success(user.username, user.userId)
         }
     }
 
@@ -103,7 +103,7 @@ class LoginViewModel @Inject constructor(
                     viewModelScope.launch {
                         val loggedInUser = userDao.getLoggedInUser()
                         if (loggedInUser != null) {
-                            _uiState.value = LoginUiState.Success(loggedInUser.toDomain().username)
+                            _uiState.value = LoginUiState.Success(loggedInUser.toDomain().username, loggedInUser.userId)
                         } else {
                             _uiState.value = LoginUiState.Error("No saved user found. Please login with password first.")
                         }
@@ -131,7 +131,7 @@ class LoginViewModel @Inject constructor(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (String) -> Unit,
+    onLoginSuccess: (String, String) -> Unit,
     onSignUpClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -145,7 +145,8 @@ fun LoginScreen(
 
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
-            onLoginSuccess((uiState as LoginUiState.Success).username)
+            val success = uiState as LoginUiState.Success
+            onLoginSuccess(success.username, success.userId)
         }
     }
 

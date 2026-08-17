@@ -28,6 +28,7 @@ import java.time.format.DateTimeFormatter
 fun OrderConfigScreen(
     beverage: Beverage,
     sugarOption: SugarOption = SugarOption.WITH_SUGAR,
+    @Suppress("UNUSED_PARAMETER") userId: String = "",
     onBack: () -> Unit,
     onOrderPlaced: (CreateOrderRequest) -> Unit,
     modifier: Modifier = Modifier
@@ -199,11 +200,6 @@ private fun BeverageSummaryCard(
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = "$${String.format("%.2f", beverage.price)} each",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
                 )
             }
 

@@ -25,6 +25,9 @@ interface OrderDao {
     @Query("SELECT * FROM orders WHERE status != 'CANCELLED' AND status != 'SERVED' ORDER BY targetTime ASC")
     fun getActiveOrders(): Flow<List<OrderEntity>>
 
+    @Query("SELECT * FROM orders ORDER BY createdAt DESC")
+    fun getAllOrders(): Flow<List<OrderEntity>>
+
     @Query("SELECT * FROM orders WHERE id = :id")
     suspend fun getOrderById(id: String): OrderEntity?
 
