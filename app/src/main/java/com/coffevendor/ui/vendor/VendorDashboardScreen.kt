@@ -7,7 +7,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.LocalCafe
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -108,6 +108,9 @@ fun VendorDashboardScreen(
                     IconButton(onClick = onManageBeverages) {
                         Icon(Icons.Default.LocalCafe, "Manage Beverages")
                     }
+                    IconButton(onClick = onLogout) {
+                        Icon(Icons.Default.Logout, "Logout")
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
@@ -131,9 +134,6 @@ fun VendorDashboardScreen(
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold
                 )
-                TextButton(onClick = onLogout) {
-                    Text("Logout")
-                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

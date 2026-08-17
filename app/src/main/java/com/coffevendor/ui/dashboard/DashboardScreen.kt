@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -97,7 +98,7 @@ class DashboardViewModel @Inject constructor(
 fun DashboardScreen(
     onOrderBeverage: () -> Unit,
     onSettingsClick: () -> Unit,
-    @Suppress("UNUSED_PARAMETER") onLogout: () -> Unit,
+    onLogout: () -> Unit,
     modifier: Modifier = Modifier,
     dashboardViewModel: DashboardViewModel = hiltViewModel()
 ) {
@@ -111,6 +112,9 @@ fun DashboardScreen(
                 actions = {
                     IconButton(onClick = onSettingsClick) {
                         Icon(Icons.Default.Settings, "Settings")
+                    }
+                    IconButton(onClick = onLogout) {
+                        Icon(Icons.Default.Logout, "Logout")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
