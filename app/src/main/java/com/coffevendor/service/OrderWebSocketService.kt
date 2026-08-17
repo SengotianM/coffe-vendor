@@ -11,55 +11,70 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import com.coffevendor.MainActivity
 import com.coffevendor.R
-import com.coffevendor.data.remote.WebSocketClient
-import com.coffevendor.data.remote.WebSocketEvent
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
+import okhttp3.*
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+
+sealed class WebSocketEvent {
+    data object Connected : WebSocketEvent()
+    data object Disconnected : WebSocketEvent()
+    data class OrderUpdate(val payload: String) : WebSocketEvent()
+    data class Error(val message: String) : WebSocketEvent()
+}
 
 @AndroidEntryPoint
 class OrderWebSocketService : android.app.Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var wakeLock: PowerManager.WakeLock? = null
+    private var webSocket: WebSocket? = null
+
+    private val client = OkHttpClient.Builder()
+        .readTimeout(0, TimeUnit.MILLISECONDS)
+        .build()
 
     override fun onCreate() {
         super.onCreate()
         acquireWakeLock()
         createNotificationChannel()
         startForeground(1, buildNotification("Connected to order stream"))
-        observeWebSocketEvents()
-        WebSocketClient.connect()
+        connectWebSocket()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
         serviceScope.cancel()
-        WebSocketClient.disconnect()
+        webSocket?.close(1000, "Service destroyed")
         releaseWakeLock()
         super.onDestroy()
     }
 
-    private fun observeWebSocketEvents() {
-        serviceScope.launch {
-            WebSocketClient.orderEvents.collect { event ->
-                when (event) {
-                    is WebSocketEvent.Connected -> {
-                        updateNotification("Connected to order stream")
-                    }
-                    is WebSocketEvent.Disconnected -> {
-                        updateNotification("Disconnected - reconnecting...")
-                    }
-                    is WebSocketEvent.OrderUpdate -> {
-                        showNewOrderNotification(event.payload)
-                    }
-                    is WebSocketEvent.Error -> {
-                        updateNotification("Connection error: ${event.message}")
-                    }
-                }
+    private fun connectWebSocket() {
+        val request = Request.Builder()
+            .url("wss://api.coffevendor.com/ws/orders")
+            .build()
+
+        webSocket = client.newWebSocket(request, object : WebSocketListener() {
+            override fun onOpen(webSocket: WebSocket, response: Response) {
+                updateNotification("Connected to order stream")
             }
-        }
+
+            override fun onMessage(webSocket: WebSocket, text: String) {
+                showNewOrderNotification(text)
+            }
+
+            override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                webSocket.close(1000, null)
+                updateNotification("Disconnected - reconnecting...")
+            }
+
+            override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                updateNotification("Connection error: ${t.message}")
+            }
+        })
     }
 
     private fun acquireWakeLock() {
@@ -68,7 +83,7 @@ class OrderWebSocketService : android.app.Service() {
             PowerManager.PARTIAL_WAKE_LOCK,
             "CoffeeVendor::WebSocketWakeLock"
         ).apply {
-            acquire(60 * 60 * 1000L) // 1 hour max
+            acquire(60 * 60 * 1000L)
         }
     }
 

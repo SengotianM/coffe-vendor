@@ -9,8 +9,6 @@ import com.coffevendor.data.local.BeverageDao
 import com.coffevendor.data.local.CoffeeDatabase
 import com.coffevendor.data.local.OrderDao
 import com.coffevendor.data.local.UserDao
-import com.coffevendor.data.remote.ApiClient
-import com.coffevendor.data.remote.CoffeeApiService
 import com.coffevendor.data.remote.SupabaseRepository
 import dagger.Module
 import dagger.Provides
@@ -93,12 +91,6 @@ object AppModule {
     @Provides
     fun provideUserDao(database: CoffeeDatabase): UserDao {
         return database.userDao()
-    }
-
-    @Provides
-    @Singleton
-    fun provideApiService(): CoffeeApiService {
-        return ApiClient.apiService
     }
 
     @Provides
