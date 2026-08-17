@@ -2,6 +2,7 @@ package com.coffevendor.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.coffevendor.data.local.BeverageDao
@@ -47,6 +48,16 @@ object AppModule {
         }
     }
 
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'CUSTOMER'")
+            database.execSQL("""
+                INSERT OR IGNORE INTO users (id, userId, username, empId, seatNumber, mobileNumber, password, photoUri, favoriteBeverages, isBiometricEnabled, isLoggedIn, role)
+                VALUES ('vendor_001', 'vendor', 'Coffee Vendor', 'V001', 'Counter-1', '0000000000', '1234', NULL, '', 0, 0, 'VENDOR')
+            """.trimIndent())
+        }
+    }
+
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): CoffeeDatabase {
@@ -55,7 +66,16 @@ object AppModule {
             CoffeeDatabase::class.java,
             "coffee_vendor_db"
         )
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        .addCallback(object : RoomDatabase.Callback() {
+            override fun onCreate(db: SupportSQLiteDatabase) {
+                super.onCreate(db)
+                db.execSQL("""
+                    INSERT OR IGNORE INTO users (id, userId, username, empId, seatNumber, mobileNumber, password, photoUri, favoriteBeverages, isBiometricEnabled, isLoggedIn, role)
+                    VALUES ('vendor_001', 'vendor', 'Coffee Vendor', 'V001', 'Counter-1', '0000000000', '1234', NULL, '', 0, 0, 'VENDOR')
+                """.trimIndent())
+            }
+        })
         .build()
     }
 

@@ -2,6 +2,7 @@ package com.coffevendor.data.local
 
 import androidx.room.*
 import com.coffevendor.data.model.User
+import com.coffevendor.data.model.UserRole
 
 @Entity(tableName = "users")
 data class UserEntity(
@@ -15,7 +16,8 @@ data class UserEntity(
     val photoUri: String?,
     val favoriteBeverages: String,
     val isBiometricEnabled: Boolean,
-    val isLoggedIn: Boolean
+    val isLoggedIn: Boolean,
+    val role: String
 )
 
 fun User.toEntity(): UserEntity = UserEntity(
@@ -29,7 +31,8 @@ fun User.toEntity(): UserEntity = UserEntity(
     photoUri = photoUri,
     favoriteBeverages = favoriteBeverages.joinToString(","),
     isBiometricEnabled = isBiometricEnabled,
-    isLoggedIn = isLoggedIn
+    isLoggedIn = isLoggedIn,
+    role = role.name
 )
 
 fun UserEntity.toDomain(): User = User(
@@ -43,5 +46,6 @@ fun UserEntity.toDomain(): User = User(
     photoUri = photoUri,
     favoriteBeverages = favoriteBeverages.split(",").filter { it.isNotBlank() },
     isBiometricEnabled = isBiometricEnabled,
-    isLoggedIn = isLoggedIn
+    isLoggedIn = isLoggedIn,
+    role = try { UserRole.valueOf(role) } catch (_: Exception) { UserRole.CUSTOMER }
 )

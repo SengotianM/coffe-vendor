@@ -9,11 +9,23 @@ interface BeverageDao {
     @Query("SELECT * FROM beverages WHERE isAvailable = 1 ORDER BY category, name")
     fun getAvailableBeverages(): Flow<List<BeverageEntity>>
 
+    @Query("SELECT * FROM beverages ORDER BY category, name")
+    fun getAllBeverages(): Flow<List<BeverageEntity>>
+
     @Query("SELECT * FROM beverages WHERE id = :id")
     suspend fun getBeverageById(id: String): BeverageEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(beverages: List<BeverageEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(beverage: BeverageEntity)
+
+    @Query("UPDATE beverages SET isAvailable = :available WHERE id = :id")
+    suspend fun updateAvailability(id: String, available: Boolean)
+
+    @Query("DELETE FROM beverages WHERE id = :id")
+    suspend fun deleteById(id: String)
 
     @Query("DELETE FROM beverages")
     suspend fun deleteAll()

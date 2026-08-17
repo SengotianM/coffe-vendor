@@ -23,6 +23,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.coffevendor.data.local.UserDao
 import com.coffevendor.data.local.toDomain
+import com.coffevendor.data.model.UserRole
 import com.coffevendor.util.BiometricHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,7 +35,7 @@ import javax.inject.Inject
 sealed class LoginUiState {
     data object Idle : LoginUiState()
     data object Loading : LoginUiState()
-    data class Success(val username: String, val userId: String) : LoginUiState()
+    data class Success(val username: String, val userId: String, val role: UserRole = UserRole.CUSTOMER) : LoginUiState()
     data class Error(val message: String) : LoginUiState()
 }
 
@@ -83,7 +84,8 @@ class LoginViewModel @Inject constructor(
             }
 
             userDao.updateLoginStatus(user.id, true)
-            _uiState.value = LoginUiState.Success(user.username, user.userId)
+            val userDomain = user.toDomain()
+            _uiState.value = LoginUiState.Success(userDomain.username, userDomain.userId, userDomain.role)
         }
     }
 
@@ -103,7 +105,8 @@ class LoginViewModel @Inject constructor(
                     viewModelScope.launch {
                         val loggedInUser = userDao.getLoggedInUser()
                         if (loggedInUser != null) {
-                            _uiState.value = LoginUiState.Success(loggedInUser.toDomain().username, loggedInUser.userId)
+                            val domain = loggedInUser.toDomain()
+                            _uiState.value = LoginUiState.Success(domain.username, domain.userId, domain.role)
                         } else {
                             _uiState.value = LoginUiState.Error("No saved user found. Please login with password first.")
                         }
@@ -131,7 +134,7 @@ class LoginViewModel @Inject constructor(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (String, String) -> Unit,
+    onLoginSuccess: (String, String, UserRole) -> Unit,
     onSignUpClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -146,7 +149,7 @@ fun LoginScreen(
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
             val success = uiState as LoginUiState.Success
-            onLoginSuccess(success.username, success.userId)
+            onLoginSuccess(success.username, success.userId, success.role)
         }
     }
 

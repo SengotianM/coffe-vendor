@@ -3,6 +3,11 @@ package com.coffevendor.data.model
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
+enum class UserRole {
+    CUSTOMER,
+    VENDOR
+}
+
 @JsonClass(generateAdapter = true)
 data class User(
     val id: String,
@@ -15,7 +20,8 @@ data class User(
     @Json(name = "photo_uri") val photoUri: String? = null,
     @Json(name = "favorite_beverages") val favoriteBeverages: List<String> = emptyList(),
     @Json(name = "is_biometric_enabled") val isBiometricEnabled: Boolean = false,
-    @Json(name = "is_logged_in") val isLoggedIn: Boolean = false
+    @Json(name = "is_logged_in") val isLoggedIn: Boolean = false,
+    val role: UserRole = UserRole.CUSTOMER
 )
 
 @JsonClass(generateAdapter = true)

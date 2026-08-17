@@ -18,6 +18,8 @@ import com.coffevendor.ui.beverages.BeveragePickerScreen
 import com.coffevendor.ui.dashboard.DashboardScreen
 import com.coffevendor.ui.orderconfig.OrderConfigScreen
 import com.coffevendor.ui.settings.UserSettingsScreen
+import com.coffevendor.ui.vendor.BeverageManageScreen
+import com.coffevendor.ui.vendor.VendorDashboardScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
@@ -51,7 +53,9 @@ enum class Screen {
     DASHBOARD,
     BEVERAGE_PICKER,
     ORDER_CONFIG,
-    SETTINGS
+    SETTINGS,
+    VENDOR_DASHBOARD,
+    BEVERAGE_MANAGE
 }
 
 @Composable
@@ -64,15 +68,21 @@ fun AppNavigation(
     var selectedSugar by remember { mutableStateOf(SugarOption.WITH_SUGAR) }
     var loggedInUserId by remember { mutableStateOf("") }
     var loggedInUsername by remember { mutableStateOf("") }
+    var loggedInRole by remember { mutableStateOf(UserRole.CUSTOMER) }
     val coroutineScope = rememberCoroutineScope()
 
     when (currentScreen) {
         Screen.LOGIN -> {
             LoginScreen(
-                onLoginSuccess = { username, userId ->
+                onLoginSuccess = { username, userId, role ->
                     loggedInUsername = username
                     loggedInUserId = userId
-                    currentScreen = Screen.DASHBOARD
+                    loggedInRole = role
+                    currentScreen = if (role == UserRole.VENDOR) {
+                        Screen.VENDOR_DASHBOARD
+                    } else {
+                        Screen.DASHBOARD
+                    }
                 },
                 onSignUpClick = { currentScreen = Screen.SIGN_UP }
             )
@@ -145,6 +155,23 @@ fun AppNavigation(
                     loggedInUserId = ""
                     loggedInUsername = ""
                 }
+            )
+        }
+
+        Screen.VENDOR_DASHBOARD -> {
+            VendorDashboardScreen(
+                onManageBeverages = { currentScreen = Screen.BEVERAGE_MANAGE },
+                onLogout = {
+                    currentScreen = Screen.LOGIN
+                    loggedInUserId = ""
+                    loggedInUsername = ""
+                }
+            )
+        }
+
+        Screen.BEVERAGE_MANAGE -> {
+            BeverageManageScreen(
+                onBack = { currentScreen = Screen.VENDOR_DASHBOARD }
             )
         }
     }
