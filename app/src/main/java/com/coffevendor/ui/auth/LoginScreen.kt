@@ -24,6 +24,7 @@ import androidx.lifecycle.viewModelScope
 import com.coffevendor.data.local.UserDao
 import com.coffevendor.data.local.toDomain
 import com.coffevendor.data.model.UserRole
+import com.coffevendor.data.remote.SupabaseRepository
 import com.coffevendor.util.BiometricHelper
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -41,7 +42,8 @@ sealed class LoginUiState {
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val repository: SupabaseRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<LoginUiState>(LoginUiState.Idle)
@@ -72,20 +74,12 @@ class LoginViewModel @Inject constructor(
                 return@launch
             }
 
-            val user = userDao.getUserByUserId(userId)
-            if (user == null) {
-                _uiState.value = LoginUiState.Error("User not found")
-                return@launch
+            val user = repository.login(userId, password)
+            if (user != null) {
+                _uiState.value = LoginUiState.Success(user.userId, user.userId, user.role)
+            } else {
+                _uiState.value = LoginUiState.Error("Login failed")
             }
-
-            if (user.password != password) {
-                _uiState.value = LoginUiState.Error("Incorrect password")
-                return@launch
-            }
-
-            userDao.updateLoginStatus(user.id, true)
-            val userDomain = user.toDomain()
-            _uiState.value = LoginUiState.Success(userDomain.username, userDomain.userId, userDomain.role)
         }
     }
 

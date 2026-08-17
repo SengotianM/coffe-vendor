@@ -24,6 +24,7 @@ import com.coffevendor.data.local.OrderDao
 import com.coffevendor.data.local.UserDao
 import com.coffevendor.data.local.toDomain
 import com.coffevendor.data.model.*
+import com.coffevendor.data.remote.SupabaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -42,7 +43,8 @@ data class DashboardOrder(
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val orderDao: OrderDao,
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val repository: SupabaseRepository
 ) : ViewModel() {
 
     private val _orders = MutableStateFlow<List<DashboardOrder>>(emptyList())
@@ -53,6 +55,7 @@ class DashboardViewModel @Inject constructor(
 
     init {
         loadOrders()
+        syncFromRemote()
         loadUsername()
     }
 
@@ -88,7 +91,13 @@ class DashboardViewModel @Inject constructor(
 
     fun cancelOrder(orderId: String) {
         viewModelScope.launch {
-            orderDao.updateStatus(orderId, OrderStatus.CANCELLED.name)
+            repository.updateOrderStatusRemote(orderId, OrderStatus.CANCELLED)
+        }
+    }
+
+    private fun syncFromRemote() {
+        viewModelScope.launch {
+            repository.syncOrdersFromRemote()
         }
     }
 }
