@@ -169,7 +169,6 @@ class SupabaseRepository @Inject constructor(
         password: String
     ): Boolean = withContext(Dispatchers.IO) {
         try {
-            val tokens = JwtManager.generateTokenPair(userId)
             val body = JSONObject().apply {
                 put("id", userId)
                 put("user_id", userId)
@@ -182,10 +181,6 @@ class SupabaseRepository @Inject constructor(
                 put("favorite_beverages", "")
                 put("is_biometric_enabled", false)
                 put("is_logged_in", false)
-                put("access_token", tokens.accessToken)
-                put("refresh_token", tokens.refreshToken)
-                put("access_token_expiry", tokens.accessTokenExpiry)
-                put("refresh_token_expiry", tokens.refreshTokenExpiry)
             }
             client.insert("users", body.toString())
 
@@ -196,15 +191,12 @@ class SupabaseRepository @Inject constructor(
                 empId = empId,
                 seatNumber = seatNumber,
                 mobileNumber = mobileNumber,
-                password = password,
-                accessToken = tokens.accessToken,
-                refreshToken = tokens.refreshToken,
-                accessTokenExpiry = tokens.accessTokenExpiry,
-                refreshTokenExpiry = tokens.refreshTokenExpiry
+                password = password
             )
             userDao.insert(user.toEntity())
             true
         } catch (e: Exception) {
+            android.util.Log.e("SupabaseRepo", "signUp failed: ${e.message}", e)
             false
         }
     }
