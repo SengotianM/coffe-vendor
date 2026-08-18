@@ -51,9 +51,18 @@ object AppModule {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'CUSTOMER'")
             database.execSQL("""
-                INSERT OR IGNORE INTO users (id, userId, username, empId, seatNumber, mobileNumber, password, photoUri, favoriteBeverages, isBiometricEnabled, isLoggedIn, role)
-                VALUES ('vendor_001', 'vendor', 'Coffee Vendor', 'V001', 'Counter-1', '0000000000', '1234', NULL, '', 0, 0, 'VENDOR')
+                INSERT OR IGNORE INTO users (id, userId, username, empId, seatNumber, mobileNumber, password, photoUri, favoriteBeverages, isBiometricEnabled, isLoggedIn, role, accessToken, refreshToken, accessTokenExpiry, refreshTokenExpiry)
+                VALUES ('vendor_001', 'vendor', 'Coffee Vendor', 'V001', 'Counter-1', '0000000000', '1234', NULL, '', 0, 0, 'VENDOR', '', '', 0, 0)
             """.trimIndent())
+        }
+    }
+
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE users ADD COLUMN accessToken TEXT NOT NULL DEFAULT ''")
+            database.execSQL("ALTER TABLE users ADD COLUMN refreshToken TEXT NOT NULL DEFAULT ''")
+            database.execSQL("ALTER TABLE users ADD COLUMN accessTokenExpiry INTEGER NOT NULL DEFAULT 0")
+            database.execSQL("ALTER TABLE users ADD COLUMN refreshTokenExpiry INTEGER NOT NULL DEFAULT 0")
         }
     }
 
@@ -65,13 +74,13 @@ object AppModule {
             CoffeeDatabase::class.java,
             "coffee_vendor_db"
         )
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
         .addCallback(object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
                 db.execSQL("""
-                    INSERT OR IGNORE INTO users (id, userId, username, empId, seatNumber, mobileNumber, password, photoUri, favoriteBeverages, isBiometricEnabled, isLoggedIn, role)
-                    VALUES ('vendor_001', 'vendor', 'Coffee Vendor', 'V001', 'Counter-1', '0000000000', '1234', NULL, '', 0, 0, 'VENDOR')
+                    INSERT OR IGNORE INTO users (id, userId, username, empId, seatNumber, mobileNumber, password, photoUri, favoriteBeverages, isBiometricEnabled, isLoggedIn, role, accessToken, refreshToken, accessTokenExpiry, refreshTokenExpiry)
+                    VALUES ('vendor_001', 'vendor', 'Coffee Vendor', 'V001', 'Counter-1', '0000000000', '1234', NULL, '', 0, 0, 'VENDOR', '', '', 0, 0)
                 """.trimIndent())
             }
         })

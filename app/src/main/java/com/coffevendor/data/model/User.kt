@@ -17,7 +17,11 @@ data class User(
     val favoriteBeverages: List<String> = emptyList(),
     val isBiometricEnabled: Boolean = false,
     val isLoggedIn: Boolean = false,
-    val role: UserRole = UserRole.CUSTOMER
+    val role: UserRole = UserRole.CUSTOMER,
+    val accessToken: String = "",
+    val refreshToken: String = "",
+    val accessTokenExpiry: Long = 0L,
+    val refreshTokenExpiry: Long = 0L
 )
 
 data class SignUpRequest(

@@ -4,8 +4,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONArray
-import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 object SupabaseClient {
@@ -15,21 +13,29 @@ object SupabaseClient {
 
     private val JSON_MEDIA = "application/json; charset=utf-8".toMediaType()
 
+    private var activeAccessToken: String = ""
+
     val client: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    fun headers(): Map<String, String> = mapOf(
-        "apikey" to ANON_KEY,
-        "Authorization" to "Bearer $ANON_KEY",
-        "Content-Type" to "application/json",
-        "Prefer" to "return=representation"
-    )
+    fun setActiveToken(token: String) {
+        activeAccessToken = token
+    }
+
+    fun headers(): Map<String, String> {
+        val token = activeAccessToken.ifBlank { ANON_KEY }
+        return mapOf(
+            "apikey" to ANON_KEY,
+            "Authorization" to "Bearer $token",
+            "Content-Type" to "application/json",
+            "Prefer" to "return=representation"
+        )
+    }
 
     fun get(table: String, filter: String? = null): String {
         val url = if (filter != null) "$REST_URL/$table?$filter" else "$REST_URL/$table"
-        android.util.Log.d("SupabaseClient", "GET $url")
         val request = Request.Builder()
             .url(url)
             .headers(headers().toHeaders())
@@ -38,7 +44,7 @@ object SupabaseClient {
         val response = client.newCall(request).execute()
         val code = response.code
         val body = response.body?.string() ?: ""
-        android.util.Log.d("SupabaseClient", "GET $table -> code=$code body=${body.take(500)}")
+        if (code == 401) throw SecurityException("Token expired or invalid (401)")
         if (code !in 200..299) {
             throw RuntimeException("Supabase get failed ($code): $body")
         }
@@ -54,7 +60,7 @@ object SupabaseClient {
         val response = client.newCall(request).execute()
         val code = response.code
         val body = response.body?.string() ?: ""
-        android.util.Log.d("SupabaseClient", "INSERT $table -> code=$code body=$body")
+        if (code == 401) throw SecurityException("Token expired or invalid (401)")
         if (code !in 200..299) {
             throw RuntimeException("Supabase insert failed ($code): $body")
         }
@@ -78,7 +84,10 @@ object SupabaseClient {
             .patch(jsonBody.toRequestBody(JSON_MEDIA))
             .build()
         val response = client.newCall(request).execute()
-        return response.body?.string() ?: ""
+        val body = response.body?.string() ?: ""
+        val code = response.code
+        if (code == 401) throw SecurityException("Token expired or invalid (401)")
+        return body
     }
 
     fun delete(table: String, filter: String): String {

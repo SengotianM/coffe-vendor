@@ -82,6 +82,14 @@ fun AppNavigation(
         loggedInRole = UserRole.CUSTOMER
     }
 
+    val doLogoutWithTokens: (String) -> Unit = { uid ->
+        coroutineScope.launch { repository.clearTokens(uid) }
+        currentScreen = Screen.LOGIN
+        loggedInUserId = ""
+        loggedInUsername = ""
+        loggedInRole = UserRole.CUSTOMER
+    }
+
     when (currentScreen) {
         Screen.LOGIN -> {
             BackHandler(enabled = false) {}
@@ -109,11 +117,11 @@ fun AppNavigation(
         }
 
         Screen.DASHBOARD -> {
-            BackHandler { doLogout() }
+            BackHandler { doLogoutWithTokens(loggedInUserId) }
             DashboardScreen(
                 onOrderBeverage = { currentScreen = Screen.BEVERAGE_PICKER },
                 onSettingsClick = { currentScreen = Screen.SETTINGS },
-                onLogout = doLogout
+                onLogout = { doLogoutWithTokens(loggedInUserId) }
             )
         }
 
@@ -163,15 +171,15 @@ fun AppNavigation(
             BackHandler { currentScreen = Screen.DASHBOARD }
             UserSettingsScreen(
                 onBack = { currentScreen = Screen.DASHBOARD },
-                onLogout = doLogout
+                onLogout = { doLogoutWithTokens(loggedInUserId) }
             )
         }
 
         Screen.VENDOR_DASHBOARD -> {
-            BackHandler { doLogout() }
+            BackHandler { doLogoutWithTokens(loggedInUserId) }
             VendorDashboardScreen(
                 onManageBeverages = { currentScreen = Screen.BEVERAGE_MANAGE },
-                onLogout = doLogout
+                onLogout = { doLogoutWithTokens(loggedInUserId) }
             )
         }
 

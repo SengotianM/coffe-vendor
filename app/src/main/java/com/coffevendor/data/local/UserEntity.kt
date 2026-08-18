@@ -17,7 +17,11 @@ data class UserEntity(
     val favoriteBeverages: String,
     val isBiometricEnabled: Boolean,
     val isLoggedIn: Boolean,
-    val role: String
+    val role: String,
+    val accessToken: String = "",
+    val refreshToken: String = "",
+    val accessTokenExpiry: Long = 0L,
+    val refreshTokenExpiry: Long = 0L
 )
 
 fun User.toEntity(): UserEntity = UserEntity(
@@ -32,7 +36,11 @@ fun User.toEntity(): UserEntity = UserEntity(
     favoriteBeverages = favoriteBeverages.joinToString(","),
     isBiometricEnabled = isBiometricEnabled,
     isLoggedIn = isLoggedIn,
-    role = role.name
+    role = role.name,
+    accessToken = accessToken,
+    refreshToken = refreshToken,
+    accessTokenExpiry = accessTokenExpiry,
+    refreshTokenExpiry = refreshTokenExpiry
 )
 
 fun UserEntity.toDomain(): User = User(
@@ -47,5 +55,9 @@ fun UserEntity.toDomain(): User = User(
     favoriteBeverages = favoriteBeverages.split(",").filter { it.isNotBlank() },
     isBiometricEnabled = isBiometricEnabled,
     isLoggedIn = isLoggedIn,
-    role = try { UserRole.valueOf(role) } catch (_: Exception) { UserRole.CUSTOMER }
+    role = try { UserRole.valueOf(role) } catch (_: Exception) { UserRole.CUSTOMER },
+    accessToken = accessToken,
+    refreshToken = refreshToken,
+    accessTokenExpiry = accessTokenExpiry,
+    refreshTokenExpiry = refreshTokenExpiry
 )

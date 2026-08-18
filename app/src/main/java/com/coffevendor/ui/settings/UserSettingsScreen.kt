@@ -111,7 +111,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val user = _currentUser.value ?: return@launch
             userDao.updateLoginStatus(user.id, false)
-            repository.updateLoginStatus(user.userId, false)
+            repository.clearTokens(user.userId)
             _currentUser.value = null
         }
     }

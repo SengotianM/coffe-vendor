@@ -76,6 +76,7 @@ class LoginViewModel @Inject constructor(
 
             val user = repository.login(userId, password)
             if (user != null) {
+                repository.activateUserToken(userId)
                 _uiState.value = LoginUiState.Success(user.userId, user.userId, user.role)
             } else {
                 _uiState.value = LoginUiState.Error("Login failed")

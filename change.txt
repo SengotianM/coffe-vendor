@@ -1,0 +1,91 @@
+# Changelog
+
+All notable changes to the Coffee Vendor Android app.
+
+## [1.8.0] - 2026-08-18
+
+### Added
+- JWT authentication system with access tokens (30-day validity) and refresh tokens (7-day validity)
+- Token generation, validation, and refresh in `JwtManager` utility
+- Token storage in Room `users` table and Supabase remote `users` table
+- Automatic token refresh on 401 responses from Supabase
+- Token clearing on logout (both local and remote)
+- Navigation backstack fix: `BackHandler` on every screen prevents back-navigation to authenticated screens after logout
+- All data syncs to remote Supabase DB (settings, orders, beverages, profile)
+- User registration tests (`UserRegistrationTest.kt`)
+- SQL schema file (`supabase-schema.sql`)
+
+### Changed
+- `User` model now includes `accessToken`, `refreshToken`, `accessTokenExpiry`, `refreshTokenExpiry` fields
+- `UserEntity` Room table updated with token columns (DB migration v4 → v5)
+- `SupabaseClient` now uses user's JWT for all authenticated API calls
+- `SupabaseRepository.login()` generates JWT tokens on successful authentication
+- `SupabaseRepository.signUp()` generates JWT tokens for new users
+- `SupabaseRepository.logout()` clears tokens from both local and remote DB
+- `SettingsViewModel.logout()` clears tokens on logout
+- APK reduced from 66MB to 54MB (removed unused dependencies)
+- R8 minification enabled for release builds
+
+### Fixed
+- Logout backstack issue: pressing back after logout no longer returns to dashboard
+- Token expiry handled gracefully with automatic refresh
+
+## [1.7.0] - 2026-08-18
+
+### Added
+- Supabase tables created: users, beverages, orders
+- Remote DB seed data: vendor user, 8 beverages
+- End-to-end registration verified
+
+### Changed
+- All data operations now sync to both local Room and remote Supabase
+
+## [1.6.0] - 2026-08-18
+
+### Added
+- `SettingsViewModel` syncs biometric, favorites, photo, logout status to Supabase
+- `VendorDashboardViewModel` syncs order accept/reject/deliver locally AND remotely
+- `BeverageManageViewModel` syncs add/delete/toggle locally AND remotely
+- `DashboardViewModel` syncs cancel order locally AND remotely
+- `SupabaseRepository` added: `updateBiometricStatus`, `updateFavorites`, `updatePhoto`, `updateLoginStatus`
+
+## [1.5.0] - 2026-08-18
+
+### Changed
+- Removed Retrofit, Moshi, DataStore, kotlinx-serialization-json dependencies
+- Replaced Supabase Kotlin SDK with direct OkHttp REST calls
+- Removed dead files: `ApiClient.kt`, `CoffeeApiService.kt`, `WebSocketClient.kt`, `SupabaseModels.kt`, `ApiModels.kt`
+- Created standalone `Boardroom.kt`, `CreateOrderRequest.kt` models
+
+## [1.4.0] - 2026-08-18
+
+### Changed
+- Replaced `material-icons-extended` (~12MB) with `material-icons-core` + custom `AppIcons.kt`
+- Inlined WebSocket into `OrderWebSocketService`
+- Enabled R8 minification and resource shrinking for release builds
+- Updated ProGuard rules for OkHttp, Room, Hilt, Compose
+
+## [1.3.0] - 2026-08-18
+
+### Added
+- User registration test suite (`UserRegistrationTest.kt` - 11 test cases)
+- Toast feedback on signup success/error
+- Debug logging for troubleshooting
+
+## [1.2.0] - 2026-08-18
+
+### Added
+- Room DB migration v1→v2: `users` table
+- Room DB migration v2→v3: `userId` on orders
+- Room DB migration v3→v4: `role` on users
+
+## [1.1.0] - 2026-08-18
+
+### Added
+- Initial project structure
+- Customer dashboard, beverage picker, order config
+- Vendor dashboard, beverage management
+- User settings with biometric, favorites, profile photo
+- Room database for local persistence
+- Hilt dependency injection
+- Firebase Cloud Messaging integration

@@ -17,7 +17,11 @@ CREATE TABLE IF NOT EXISTS users (
     favorite_beverages TEXT NOT NULL DEFAULT '',
     is_biometric_enabled BOOLEAN NOT NULL DEFAULT false,
     is_logged_in BOOLEAN NOT NULL DEFAULT false,
-    role TEXT NOT NULL DEFAULT 'CUSTOMER'
+    role TEXT NOT NULL DEFAULT 'CUSTOMER',
+    access_token TEXT NOT NULL DEFAULT '',
+    refresh_token TEXT NOT NULL DEFAULT '',
+    access_token_expiry BIGINT NOT NULL DEFAULT 0,
+    refresh_token_expiry BIGINT NOT NULL DEFAULT 0
 );
 
 ALTER TABLE users REPLICA IDENTITY FULL;
@@ -67,8 +71,8 @@ CREATE POLICY "Allow all access" ON beverages FOR ALL USING (true) WITH CHECK (t
 CREATE POLICY "Allow all access" ON orders FOR ALL USING (true) WITH CHECK (true);
 
 -- 5. SEED DEFAULT VENDOR
-INSERT INTO users (id, user_id, username, emp_id, seat_number, mobile_number, password, photo_uri, favorite_beverages, is_biometric_enabled, is_logged_in, role)
-VALUES ('vendor_001', 'vendor', 'Coffee Vendor', 'V001', 'Counter-1', '0000000000', '1234', NULL, '', false, false, 'VENDOR')
+INSERT INTO users (id, user_id, username, emp_id, seat_number, mobile_number, password, photo_uri, favorite_beverages, is_biometric_enabled, is_logged_in, role, access_token, refresh_token, access_token_expiry, refresh_token_expiry)
+VALUES ('vendor_001', 'vendor', 'Coffee Vendor', 'V001', 'Counter-1', '0000000000', '1234', NULL, '', false, false, 'VENDOR', '', '', 0, 0)
 ON CONFLICT (user_id) DO NOTHING;
 
 -- 6. SEED 8 BEVERAGES
@@ -83,3 +87,10 @@ VALUES
     ('7', 'Horlicks', 'Warm Horlicks health drink', 25.0, '', 'Horlicks powder,Milk,Sugar', 'HEALTH_DRINK', 'ic_beverage_horlicks', true, true),
     ('8', 'Boost', 'Energy Boost health drink', 25.0, '', 'Boost powder,Milk,Sugar', 'HEALTH_DRINK', 'ic_beverage_boost', true, true)
 ON CONFLICT (id) DO NOTHING;
+
+-- 7. MIGRATION FOR EXISTING TABLES (if you already created them before)
+-- Run these if your users table already exists without token columns:
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS access_token TEXT NOT NULL DEFAULT '';
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS refresh_token TEXT NOT NULL DEFAULT '';
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS access_token_expiry BIGINT NOT NULL DEFAULT 0;
+-- ALTER TABLE users ADD COLUMN IF NOT EXISTS refresh_token_expiry BIGINT NOT NULL DEFAULT 0;

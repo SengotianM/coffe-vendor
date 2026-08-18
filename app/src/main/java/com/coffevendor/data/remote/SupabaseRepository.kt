@@ -14,6 +14,7 @@ import com.coffevendor.data.model.OrderStatus
 import com.coffevendor.data.model.RecurrenceType
 import com.coffevendor.data.model.User
 import com.coffevendor.data.model.UserRole
+import com.coffevendor.util.JwtManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -30,18 +31,79 @@ class SupabaseRepository @Inject constructor(
 ) {
     private val client = SupabaseClient
 
+    // ── Auth helpers ──
+
+    suspend fun activateUserToken(userId: String) {
+        val entity = userDao.getUserByUserId(userId) ?: return
+        if (entity.accessToken.isNotBlank() && JwtManager.validateAccessToken(entity.accessToken)) {
+            client.setActiveToken(entity.accessToken)
+        } else if (entity.refreshToken.isNotBlank() && JwtManager.isRefreshTokenValid(entity.refreshToken, entity.refreshTokenExpiry)) {
+            val refreshed = JwtManager.refreshAccessToken(entity.refreshToken, entity.userId, entity.refreshTokenExpiry) ?: return
+            userDao.updateTokens(userId, refreshed.accessToken, refreshed.accessTokenExpiry)
+            client.setActiveToken(refreshed.accessToken)
+        } else {
+            val tokens = JwtManager.generateTokenPair(userId)
+            userDao.updateTokens(userId, tokens.accessToken, tokens.accessTokenExpiry)
+            try {
+                val body = JSONObject().apply {
+                    put("access_token", tokens.accessToken)
+                    put("refresh_token", tokens.refreshToken)
+                    put("access_token_expiry", tokens.accessTokenExpiry)
+                    put("refresh_token_expiry", tokens.refreshTokenExpiry)
+                }
+                client.update("users", body.toString(), "user_id=eq.$userId")
+            } catch (_: Exception) {}
+            client.setActiveToken(tokens.accessToken)
+        }
+    }
+
+    private suspend fun refreshIfNeeded(userId: String): Boolean {
+        val entity = userDao.getUserByUserId(userId) ?: return false
+        if (JwtManager.validateAccessToken(entity.accessToken)) {
+            client.setActiveToken(entity.accessToken)
+            return true
+        }
+        if (entity.refreshToken.isNotBlank() && JwtManager.isRefreshTokenValid(entity.refreshToken, entity.refreshTokenExpiry)) {
+            val refreshed = JwtManager.refreshAccessToken(entity.refreshToken, userId, entity.refreshTokenExpiry) ?: return false
+            userDao.updateTokens(userId, refreshed.accessToken, refreshed.accessTokenExpiry)
+            try {
+                val body = JSONObject().apply {
+                    put("access_token", refreshed.accessToken)
+                    put("access_token_expiry", refreshed.accessTokenExpiry)
+                }
+                client.update("users", body.toString(), "user_id=eq.$userId")
+            } catch (_: Exception) {}
+            client.setActiveToken(refreshed.accessToken)
+            return true
+        }
+        return false
+    }
+
+    fun validateCurrentToken(): Boolean {
+        val entity = runCatching {
+            kotlinx.coroutines.runBlocking { userDao.getLoggedInUser() }
+        }.getOrNull() ?: return false
+        return JwtManager.validateAccessToken(entity.accessToken)
+    }
+
     // ── Users ──
 
     suspend fun login(userId: String, password: String): User? = withContext(Dispatchers.IO) {
         try {
-            android.util.Log.d("SupabaseRepo", "Logging in user: $userId")
             val json = client.get("users", "user_id=eq.$userId")
-            android.util.Log.d("SupabaseRepo", "Login response: $json")
             val arr = JSONArray(json)
             if (arr.length() == 0) {
                 val local = userDao.getUserByUserId(userId)
                 if (local != null && local.password == password) {
-                    return@withContext local.toDomain()
+                    val tokens = JwtManager.generateTokenPair(userId)
+                    userDao.updateTokens(userId, tokens.accessToken, tokens.accessTokenExpiry)
+                    client.setActiveToken(tokens.accessToken)
+                    return@withContext local.toDomain().copy(
+                        accessToken = tokens.accessToken,
+                        refreshToken = tokens.refreshToken,
+                        accessTokenExpiry = tokens.accessTokenExpiry,
+                        refreshTokenExpiry = tokens.refreshTokenExpiry
+                    )
                 }
                 return@withContext null
             }
@@ -49,7 +111,8 @@ class SupabaseRepository @Inject constructor(
             val remotePw = obj.optString("password", "")
             val remoteRole = obj.optString("role", "CUSTOMER")
             if (remotePw == password) {
-                User(
+                val tokens = JwtManager.generateTokenPair(userId)
+                val user = User(
                     id = obj.optString("id", userId),
                     userId = userId,
                     username = obj.optString("username", userId),
@@ -57,15 +120,40 @@ class SupabaseRepository @Inject constructor(
                     seatNumber = obj.optString("seat_number", ""),
                     mobileNumber = obj.optString("mobile_number", ""),
                     password = remotePw,
-                    role = try { UserRole.valueOf(remoteRole) } catch (_: Exception) { UserRole.CUSTOMER }
+                    role = try { UserRole.valueOf(remoteRole) } catch (_: Exception) { UserRole.CUSTOMER },
+                    accessToken = tokens.accessToken,
+                    refreshToken = tokens.refreshToken,
+                    accessTokenExpiry = tokens.accessTokenExpiry,
+                    refreshTokenExpiry = tokens.refreshTokenExpiry
                 )
+                userDao.insert(user.toEntity())
+                try {
+                    val body = JSONObject().apply {
+                        put("access_token", tokens.accessToken)
+                        put("refresh_token", tokens.refreshToken)
+                        put("access_token_expiry", tokens.accessTokenExpiry)
+                        put("refresh_token_expiry", tokens.refreshTokenExpiry)
+                        put("is_logged_in", true)
+                    }
+                    client.update("users", body.toString(), "user_id=eq.$userId")
+                } catch (_: Exception) {}
+                client.setActiveToken(tokens.accessToken)
+                user
             } else {
                 null
             }
         } catch (e: Exception) {
             val local = userDao.getUserByUserId(userId)
             if (local != null && local.password == password) {
-                local.toDomain()
+                val tokens = JwtManager.generateTokenPair(userId)
+                userDao.updateTokens(userId, tokens.accessToken, tokens.accessTokenExpiry)
+                client.setActiveToken(tokens.accessToken)
+                local.toDomain().copy(
+                    accessToken = tokens.accessToken,
+                    refreshToken = tokens.refreshToken,
+                    accessTokenExpiry = tokens.accessTokenExpiry,
+                    refreshTokenExpiry = tokens.refreshTokenExpiry
+                )
             } else {
                 null
             }
@@ -81,6 +169,7 @@ class SupabaseRepository @Inject constructor(
         password: String
     ): Boolean = withContext(Dispatchers.IO) {
         try {
+            val tokens = JwtManager.generateTokenPair(userId)
             val body = JSONObject().apply {
                 put("id", userId)
                 put("user_id", userId)
@@ -93,10 +182,12 @@ class SupabaseRepository @Inject constructor(
                 put("favorite_beverages", "")
                 put("is_biometric_enabled", false)
                 put("is_logged_in", false)
+                put("access_token", tokens.accessToken)
+                put("refresh_token", tokens.refreshToken)
+                put("access_token_expiry", tokens.accessTokenExpiry)
+                put("refresh_token_expiry", tokens.refreshTokenExpiry)
             }
-            android.util.Log.d("SupabaseRepo", "Signing up user: $userId")
-            val response = client.insert("users", body.toString())
-            android.util.Log.d("SupabaseRepo", "Supabase response: $response")
+            client.insert("users", body.toString())
 
             val user = User(
                 id = userId,
@@ -105,13 +196,15 @@ class SupabaseRepository @Inject constructor(
                 empId = empId,
                 seatNumber = seatNumber,
                 mobileNumber = mobileNumber,
-                password = password
+                password = password,
+                accessToken = tokens.accessToken,
+                refreshToken = tokens.refreshToken,
+                accessTokenExpiry = tokens.accessTokenExpiry,
+                refreshTokenExpiry = tokens.refreshTokenExpiry
             )
             userDao.insert(user.toEntity())
-            android.util.Log.d("SupabaseRepo", "User saved locally too")
             true
         } catch (e: Exception) {
-            android.util.Log.e("SupabaseRepo", "signUp failed: ${e.message}", e)
             false
         }
     }
@@ -119,6 +212,7 @@ class SupabaseRepository @Inject constructor(
     // ── Beverages ──
 
     suspend fun updateBiometricStatus(userId: String, enabled: Boolean) = withContext(Dispatchers.IO) {
+        try { refreshIfNeeded(userId) } catch (_: Exception) {}
         try {
             val body = JSONObject().apply { put("is_biometric_enabled", enabled) }
             client.update("users", body.toString(), "user_id=eq.$userId")
@@ -126,6 +220,7 @@ class SupabaseRepository @Inject constructor(
     }
 
     suspend fun updateFavorites(userId: String, favorites: List<String>) = withContext(Dispatchers.IO) {
+        try { refreshIfNeeded(userId) } catch (_: Exception) {}
         try {
             val body = JSONObject().apply { put("favorite_beverages", favorites.joinToString(",")) }
             client.update("users", body.toString(), "user_id=eq.$userId")
@@ -133,6 +228,7 @@ class SupabaseRepository @Inject constructor(
     }
 
     suspend fun updatePhoto(userId: String, photoUri: String?) = withContext(Dispatchers.IO) {
+        try { refreshIfNeeded(userId) } catch (_: Exception) {}
         try {
             val body = JSONObject().apply { put("photo_uri", photoUri ?: JSONObject.NULL) }
             client.update("users", body.toString(), "user_id=eq.$userId")
@@ -140,6 +236,7 @@ class SupabaseRepository @Inject constructor(
     }
 
     suspend fun updateLoginStatus(userId: String, loggedIn: Boolean) = withContext(Dispatchers.IO) {
+        try { refreshIfNeeded(userId) } catch (_: Exception) {}
         try {
             val body = JSONObject().apply { put("is_logged_in", loggedIn) }
             client.update("users", body.toString(), "user_id=eq.$userId")
@@ -269,5 +366,21 @@ class SupabaseRepository @Inject constructor(
             val body = JSONObject().apply { put("status", status.name) }
             client.update("orders", body.toString(), "id=eq.$orderId")
         } catch (_: Exception) {}
+    }
+
+    // ── Logout ──
+
+    suspend fun clearTokens(userId: String) = withContext(Dispatchers.IO) {
+        try {
+            val body = JSONObject().apply {
+                put("access_token", "")
+                put("refresh_token", "")
+                put("access_token_expiry", 0)
+                put("refresh_token_expiry", 0)
+                put("is_logged_in", false)
+            }
+            client.update("users", body.toString(), "user_id=eq.$userId")
+        } catch (_: Exception) {}
+        client.setActiveToken("")
     }
 }

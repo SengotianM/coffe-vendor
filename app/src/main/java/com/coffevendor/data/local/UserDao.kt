@@ -39,6 +39,9 @@ interface UserDao {
     @Query("UPDATE users SET favoriteBeverages = :favorites WHERE id = :id")
     suspend fun updateFavorites(id: String, favorites: String)
 
+    @Query("UPDATE users SET accessToken = :accessToken, accessTokenExpiry = :accessTokenExpiry WHERE userId = :userId")
+    suspend fun updateTokens(userId: String, accessToken: String, accessTokenExpiry: Long)
+
     @Query("DELETE FROM users")
     suspend fun deleteAll()
 }
