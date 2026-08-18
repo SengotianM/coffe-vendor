@@ -75,18 +75,21 @@ class VendorDashboardViewModel @Inject constructor(
 
     fun acceptOrder(orderId: String) {
         viewModelScope.launch {
+            orderDao.updateStatus(orderId, OrderStatus.PREPARING.name)
             repository.updateOrderStatusRemote(orderId, OrderStatus.PREPARING)
         }
     }
 
     fun deliverOrder(orderId: String) {
         viewModelScope.launch {
+            orderDao.updateStatus(orderId, OrderStatus.OUT_FOR_DELIVERY.name)
             repository.updateOrderStatusRemote(orderId, OrderStatus.OUT_FOR_DELIVERY)
         }
     }
 
     fun rejectOrder(orderId: String) {
         viewModelScope.launch {
+            orderDao.updateStatus(orderId, OrderStatus.CANCELLED.name)
             repository.updateOrderStatusRemote(orderId, OrderStatus.CANCELLED)
         }
     }

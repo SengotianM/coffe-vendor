@@ -91,6 +91,7 @@ class DashboardViewModel @Inject constructor(
 
     fun cancelOrder(orderId: String) {
         viewModelScope.launch {
+            orderDao.updateStatus(orderId, OrderStatus.CANCELLED.name)
             repository.updateOrderStatusRemote(orderId, OrderStatus.CANCELLED)
         }
     }

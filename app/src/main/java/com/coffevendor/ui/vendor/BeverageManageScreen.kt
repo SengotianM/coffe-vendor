@@ -52,24 +52,28 @@ class BeverageManageViewModel @Inject constructor(
 
     fun toggleAvailability(beverage: Beverage) {
         viewModelScope.launch {
+            beverageDao.updateAvailability(beverage.id, !beverage.isAvailable)
             repository.toggleBeverageAvailabilityRemote(beverage.id, !beverage.isAvailable)
         }
     }
 
     fun deleteBeverage(beverage: Beverage) {
         viewModelScope.launch {
+            beverageDao.deleteById(beverage.id)
             repository.deleteBeverageRemote(beverage.id)
         }
     }
 
     fun addBeverage(beverage: Beverage) {
         viewModelScope.launch {
+            beverageDao.insert(beverage.toEntity())
             repository.pushBeverage(beverage)
         }
     }
 
     fun seedBeverages() {
         viewModelScope.launch {
+            beverageDao.insertAll(BeverageData.beverages.map { it.toEntity() })
             BeverageData.beverages.forEach { beverage ->
                 repository.pushBeverage(beverage)
             }

@@ -35,6 +35,7 @@ import com.coffevendor.data.local.UserDao
 import com.coffevendor.data.local.toDomain
 import com.coffevendor.data.model.BeverageData
 import com.coffevendor.data.model.User
+import com.coffevendor.data.remote.SupabaseRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -44,7 +45,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val userDao: UserDao
+    private val userDao: UserDao,
+    private val repository: SupabaseRepository
 ) : ViewModel() {
 
     private val _currentUser = MutableStateFlow<User?>(null)
@@ -75,6 +77,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val user = _currentUser.value ?: return@launch
             userDao.updateBiometricStatus(user.id, enabled)
+            repository.updateBiometricStatus(user.userId, enabled)
             _biometricEnabled.value = enabled
             _currentUser.value = user.copy(isBiometricEnabled = enabled)
         }
@@ -91,6 +94,7 @@ class SettingsViewModel @Inject constructor(
             }
             _favorites.value = currentFavorites
             userDao.updateFavorites(user.id, currentFavorites.joinToString(","))
+            repository.updateFavorites(user.userId, currentFavorites)
         }
     }
 
@@ -98,6 +102,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val user = _currentUser.value ?: return@launch
             userDao.updatePhoto(user.id, uri.toString())
+            repository.updatePhoto(user.userId, uri.toString())
             _currentUser.value = user.copy(photoUri = uri.toString())
         }
     }
@@ -106,6 +111,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val user = _currentUser.value ?: return@launch
             userDao.updateLoginStatus(user.id, false)
+            repository.updateLoginStatus(user.userId, false)
             _currentUser.value = null
         }
     }

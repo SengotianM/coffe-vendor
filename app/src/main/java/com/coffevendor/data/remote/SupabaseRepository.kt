@@ -118,6 +118,34 @@ class SupabaseRepository @Inject constructor(
 
     // ── Beverages ──
 
+    suspend fun updateBiometricStatus(userId: String, enabled: Boolean) = withContext(Dispatchers.IO) {
+        try {
+            val body = JSONObject().apply { put("is_biometric_enabled", enabled) }
+            client.update("users", body.toString(), "user_id=eq.$userId")
+        } catch (_: Exception) {}
+    }
+
+    suspend fun updateFavorites(userId: String, favorites: List<String>) = withContext(Dispatchers.IO) {
+        try {
+            val body = JSONObject().apply { put("favorite_beverages", favorites.joinToString(",")) }
+            client.update("users", body.toString(), "user_id=eq.$userId")
+        } catch (_: Exception) {}
+    }
+
+    suspend fun updatePhoto(userId: String, photoUri: String?) = withContext(Dispatchers.IO) {
+        try {
+            val body = JSONObject().apply { put("photo_uri", photoUri ?: JSONObject.NULL) }
+            client.update("users", body.toString(), "user_id=eq.$userId")
+        } catch (_: Exception) {}
+    }
+
+    suspend fun updateLoginStatus(userId: String, loggedIn: Boolean) = withContext(Dispatchers.IO) {
+        try {
+            val body = JSONObject().apply { put("is_logged_in", loggedIn) }
+            client.update("users", body.toString(), "user_id=eq.$userId")
+        } catch (_: Exception) {}
+    }
+
     suspend fun syncBeveragesFromRemote(): List<Beverage> = withContext(Dispatchers.IO) {
         try {
             val json = client.get("beverages", "is_available=eq.true")
@@ -197,6 +225,7 @@ class SupabaseRepository @Inject constructor(
                 put("special_instructions", order.specialInstructions ?: JSONObject.NULL)
             }
             client.insert("orders", body.toString())
+            orderDao.insert(order.toEntity())
         } catch (e: Exception) {
             orderDao.insert(order.toEntity())
         }
