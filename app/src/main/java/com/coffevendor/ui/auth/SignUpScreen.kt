@@ -76,18 +76,22 @@ class SignUpViewModel @Inject constructor(
         password: String
     ) {
         viewModelScope.launch {
+            android.util.Log.d("SignUpVM", "signUp called: userId=$userId")
             if (userId.isBlank() || username.isBlank() || empId.isBlank() ||
                 seatNumber.isBlank() || mobileNumber.isBlank() || password.isBlank()) {
+                android.util.Log.d("SignUpVM", "Validation failed: blank fields")
                 _uiState.value = SignUpUiState.Error("All fields are required")
                 return@launch
             }
 
             if (password.length < 6) {
+                android.util.Log.d("SignUpVM", "Validation failed: short password")
                 _uiState.value = SignUpUiState.Error("Password must be at least 6 characters")
                 return@launch
             }
 
             val existingUser = userDao.getUserByUserId(userId)
+            android.util.Log.d("SignUpVM", "existingUser check: ${existingUser != null}")
             if (existingUser != null) {
                 _uiState.value = SignUpUiState.Error("User ID already exists")
                 return@launch
@@ -103,11 +107,20 @@ class SignUpViewModel @Inject constructor(
                 password = password
             )
 
-            val success = repository.signUp(user.userId, user.password)
+            android.util.Log.d("SignUpVM", "Calling repository.signUp...")
+            val success = repository.signUp(
+                userId = user.userId,
+                username = user.username,
+                empId = user.empId,
+                seatNumber = user.seatNumber,
+                mobileNumber = user.mobileNumber,
+                password = user.password
+            )
+            android.util.Log.d("SignUpVM", "repository.signUp result: $success")
             if (success) {
                 _uiState.value = SignUpUiState.SignUpSuccess
             } else {
-                _uiState.value = SignUpUiState.Error("Sign up failed")
+                _uiState.value = SignUpUiState.Error("Sign up failed - check connection")
             }
         }
     }
@@ -125,6 +138,7 @@ fun SignUpScreen(
     modifier: Modifier = Modifier
 ) {
     val viewModel: SignUpViewModel = hiltViewModel()
+    val context = androidx.compose.ui.platform.LocalContext.current
     var userId by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var empId by remember { mutableStateOf("") }
@@ -136,8 +150,15 @@ fun SignUpScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState) {
-        if (uiState is SignUpUiState.SignUpSuccess) {
-            onSignUpComplete()
+        when (uiState) {
+            is SignUpUiState.SignUpSuccess -> {
+                android.widget.Toast.makeText(context, "Registration successful!", android.widget.Toast.LENGTH_LONG).show()
+                onSignUpComplete()
+            }
+            is SignUpUiState.Error -> {
+                android.widget.Toast.makeText(context, (uiState as SignUpUiState.Error).message, android.widget.Toast.LENGTH_LONG).show()
+            }
+            else -> {}
         }
     }
 
@@ -253,8 +274,7 @@ fun SignUpScreen(
                     .height(50.dp),
                 enabled = userId.isNotBlank() && username.isNotBlank() &&
                         empId.isNotBlank() && seatNumber.isNotBlank() &&
-                        mobileNumber.length == 10 && password.length >= 6 &&
-                        password == confirmPassword
+                        mobileNumber.length == 10 && password.length >= 6
             ) {
                 Icon(Icons.Default.Check, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))

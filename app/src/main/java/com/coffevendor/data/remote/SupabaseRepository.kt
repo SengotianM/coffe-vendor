@@ -34,7 +34,9 @@ class SupabaseRepository @Inject constructor(
 
     suspend fun login(userId: String, password: String): User? = withContext(Dispatchers.IO) {
         try {
+            android.util.Log.d("SupabaseRepo", "Logging in user: $userId")
             val json = client.get("users", "user_id=eq.$userId")
+            android.util.Log.d("SupabaseRepo", "Login response: $json")
             val arr = JSONArray(json)
             if (arr.length() == 0) {
                 val local = userDao.getUserByUserId(userId)
@@ -70,16 +72,46 @@ class SupabaseRepository @Inject constructor(
         }
     }
 
-    suspend fun signUp(userId: String, password: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun signUp(
+        userId: String,
+        username: String,
+        empId: String,
+        seatNumber: String,
+        mobileNumber: String,
+        password: String
+    ): Boolean = withContext(Dispatchers.IO) {
         try {
             val body = JSONObject().apply {
+                put("id", userId)
                 put("user_id", userId)
+                put("username", username)
+                put("emp_id", empId)
+                put("seat_number", seatNumber)
+                put("mobile_number", mobileNumber)
                 put("password", password)
                 put("role", "CUSTOMER")
+                put("favorite_beverages", "")
+                put("is_biometric_enabled", false)
+                put("is_logged_in", false)
             }
-            client.insert("users", body.toString())
+            android.util.Log.d("SupabaseRepo", "Signing up user: $userId")
+            val response = client.insert("users", body.toString())
+            android.util.Log.d("SupabaseRepo", "Supabase response: $response")
+
+            val user = User(
+                id = userId,
+                userId = userId,
+                username = username,
+                empId = empId,
+                seatNumber = seatNumber,
+                mobileNumber = mobileNumber,
+                password = password
+            )
+            userDao.insert(user.toEntity())
+            android.util.Log.d("SupabaseRepo", "User saved locally too")
             true
         } catch (e: Exception) {
+            android.util.Log.e("SupabaseRepo", "signUp failed: ${e.message}", e)
             false
         }
     }

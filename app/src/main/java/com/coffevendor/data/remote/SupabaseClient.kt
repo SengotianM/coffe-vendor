@@ -29,13 +29,20 @@ object SupabaseClient {
 
     fun get(table: String, filter: String? = null): String {
         val url = if (filter != null) "$REST_URL/$table?$filter" else "$REST_URL/$table"
+        android.util.Log.d("SupabaseClient", "GET $url")
         val request = Request.Builder()
             .url(url)
             .headers(headers().toHeaders())
             .get()
             .build()
         val response = client.newCall(request).execute()
-        return response.body?.string() ?: "[]"
+        val code = response.code
+        val body = response.body?.string() ?: ""
+        android.util.Log.d("SupabaseClient", "GET $table -> code=$code body=${body.take(500)}")
+        if (code !in 200..299) {
+            throw RuntimeException("Supabase get failed ($code): $body")
+        }
+        return body
     }
 
     fun insert(table: String, jsonBody: String): String {
@@ -45,7 +52,13 @@ object SupabaseClient {
             .post(jsonBody.toRequestBody(JSON_MEDIA))
             .build()
         val response = client.newCall(request).execute()
-        return response.body?.string() ?: ""
+        val code = response.code
+        val body = response.body?.string() ?: ""
+        android.util.Log.d("SupabaseClient", "INSERT $table -> code=$code body=$body")
+        if (code !in 200..299) {
+            throw RuntimeException("Supabase insert failed ($code): $body")
+        }
+        return body
     }
 
     fun insertMultiple(table: String, jsonArray: String): String {
