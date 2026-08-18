@@ -11,8 +11,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
+import com.coffevendor.ui.icons.AppIcons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -256,7 +260,7 @@ fun UserSettingsScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
-                                Icons.Default.Fingerprint,
+                                AppIcons.Fingerprint,
                                 contentDescription = null,
                                 tint = MaterialTheme.colorScheme.primary,
                                 modifier = Modifier.size(24.dp)
@@ -358,7 +362,7 @@ fun UserSettingsScreen(
                         contentColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Icon(Icons.Default.Logout, contentDescription = null)
+                    Icon(AppIcons.Logout, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Logout")
                 }

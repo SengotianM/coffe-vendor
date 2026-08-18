@@ -8,8 +8,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material3.*
+import com.coffevendor.ui.icons.AppIcons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -248,7 +248,7 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(50.dp)
                 ) {
-                    Icon(Icons.Default.Fingerprint, contentDescription = null)
+                    Icon(AppIcons.Fingerprint, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
                     Text("Login with Biometric", style = MaterialTheme.typography.titleMedium)
                 }

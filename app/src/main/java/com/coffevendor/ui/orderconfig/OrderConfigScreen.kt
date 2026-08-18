@@ -8,11 +8,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
+import com.coffevendor.ui.icons.AppIcons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -102,7 +101,7 @@ fun OrderConfigScreen(
 
             Divider()
 
-            SectionHeader(icon = Icons.Default.Schedule, title = "Delivery Time")
+            SectionHeader(icon = AppIcons.Schedule, title = "Delivery Time")
 
             TimePickerRow(
                 selectedTime = selectedTime,
@@ -322,7 +321,7 @@ private fun HallDropdown(
             label = { Text("Select Boardroom") },
             placeholder = { Text("Choose a hall") },
             trailingIcon = {
-                Icon(Icons.Default.ArrowDropDown, "Expand dropdown")
+                Icon(AppIcons.ArrowDropDown, "Expand dropdown")
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -369,7 +368,7 @@ private fun TimePickerRow(
         readOnly = true,
         label = { Text("Delivery Time") },
         trailingIcon = {
-            Icon(Icons.Default.Schedule, "Select time")
+            Icon(AppIcons.Schedule, "Select time")
         },
         modifier = Modifier
             .fillMaxWidth()
@@ -432,7 +431,7 @@ private fun RecurrenceSelector(
             readOnly = true,
             label = { Text("Repeat Order") },
             trailingIcon = {
-                Icon(Icons.Default.ArrowDropDown, "Expand dropdown")
+                Icon(AppIcons.ArrowDropDown, "Expand dropdown")
             },
             modifier = Modifier
                 .fillMaxWidth()

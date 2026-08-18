@@ -6,9 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.LocalCafe
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.*
+import com.coffevendor.ui.icons.AppIcons
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,10 +114,10 @@ fun VendorDashboardScreen(
                 title = { Text("Vendor Dashboard") },
                 actions = {
                     IconButton(onClick = onManageBeverages) {
-                        Icon(Icons.Default.LocalCafe, "Manage Beverages")
+                        Icon(AppIcons.LocalCafe, "Manage Beverages")
                     }
                     IconButton(onClick = onLogout) {
-                        Icon(Icons.Default.Logout, "Logout")
+                        Icon(AppIcons.Logout, "Logout")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
