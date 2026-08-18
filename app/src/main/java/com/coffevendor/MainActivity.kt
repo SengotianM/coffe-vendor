@@ -2,6 +2,7 @@ package com.coffevendor
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -74,8 +75,16 @@ fun AppNavigation(
     var loggedInRole by remember { mutableStateOf(UserRole.CUSTOMER) }
     val coroutineScope = rememberCoroutineScope()
 
+    val doLogout: () -> Unit = {
+        currentScreen = Screen.LOGIN
+        loggedInUserId = ""
+        loggedInUsername = ""
+        loggedInRole = UserRole.CUSTOMER
+    }
+
     when (currentScreen) {
         Screen.LOGIN -> {
+            BackHandler(enabled = false) {}
             LoginScreen(
                 onLoginSuccess = { username, userId, role ->
                     loggedInUsername = username
@@ -92,6 +101,7 @@ fun AppNavigation(
         }
 
         Screen.SIGN_UP -> {
+            BackHandler { currentScreen = Screen.LOGIN }
             SignUpScreen(
                 onSignUpComplete = { currentScreen = Screen.LOGIN },
                 onBack = { currentScreen = Screen.LOGIN }
@@ -99,18 +109,16 @@ fun AppNavigation(
         }
 
         Screen.DASHBOARD -> {
+            BackHandler { doLogout() }
             DashboardScreen(
                 onOrderBeverage = { currentScreen = Screen.BEVERAGE_PICKER },
                 onSettingsClick = { currentScreen = Screen.SETTINGS },
-                onLogout = {
-                    currentScreen = Screen.LOGIN
-                    loggedInUserId = ""
-                    loggedInUsername = ""
-                }
+                onLogout = doLogout
             )
         }
 
         Screen.BEVERAGE_PICKER -> {
+            BackHandler { currentScreen = Screen.DASHBOARD }
             BeveragePickerScreen(
                 onBeverageSelected = { beverage, sugar ->
                     selectedBeverage = beverage
@@ -123,6 +131,7 @@ fun AppNavigation(
         }
 
         Screen.ORDER_CONFIG -> {
+            BackHandler { currentScreen = Screen.BEVERAGE_PICKER }
             OrderConfigScreen(
                 beverage = selectedBeverage!!,
                 sugarOption = selectedSugar,
@@ -151,28 +160,23 @@ fun AppNavigation(
         }
 
         Screen.SETTINGS -> {
+            BackHandler { currentScreen = Screen.DASHBOARD }
             UserSettingsScreen(
                 onBack = { currentScreen = Screen.DASHBOARD },
-                onLogout = {
-                    currentScreen = Screen.LOGIN
-                    loggedInUserId = ""
-                    loggedInUsername = ""
-                }
+                onLogout = doLogout
             )
         }
 
         Screen.VENDOR_DASHBOARD -> {
+            BackHandler { doLogout() }
             VendorDashboardScreen(
                 onManageBeverages = { currentScreen = Screen.BEVERAGE_MANAGE },
-                onLogout = {
-                    currentScreen = Screen.LOGIN
-                    loggedInUserId = ""
-                    loggedInUsername = ""
-                }
+                onLogout = doLogout
             )
         }
 
         Screen.BEVERAGE_MANAGE -> {
+            BackHandler { currentScreen = Screen.VENDOR_DASHBOARD }
             BeverageManageScreen(
                 onBack = { currentScreen = Screen.VENDOR_DASHBOARD }
             )
