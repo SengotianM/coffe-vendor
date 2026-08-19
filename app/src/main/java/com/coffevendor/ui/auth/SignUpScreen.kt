@@ -153,10 +153,12 @@ fun SignUpScreen(
         when (uiState) {
             is SignUpUiState.SignUpSuccess -> {
                 android.widget.Toast.makeText(context, "Registration successful!", android.widget.Toast.LENGTH_LONG).show()
+                viewModel.resetState()
                 onSignUpComplete()
             }
             is SignUpUiState.Error -> {
                 android.widget.Toast.makeText(context, (uiState as SignUpUiState.Error).message, android.widget.Toast.LENGTH_LONG).show()
+                viewModel.resetState()
             }
             else -> {}
         }

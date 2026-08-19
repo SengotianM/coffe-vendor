@@ -144,6 +144,7 @@ fun LoginScreen(
     LaunchedEffect(uiState) {
         if (uiState is LoginUiState.Success) {
             val success = uiState as LoginUiState.Success
+            loginViewModel.resetState()
             onLoginSuccess(success.username, success.userId, success.role)
         }
     }
