@@ -22,10 +22,32 @@ android {
         }
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // Use default debug keystore
+        }
+        create("release") {
+            val keystoreFile = rootProject.file("keystore/release.jks")
+            if (keystoreFile.exists()) {
+                storeFile = keystoreFile
+                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+                keyAlias = System.getenv("KEY_ALIAS") ?: ""
+                keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            } else {
+                // Fallback to debug keystore for CI builds
+                storeFile = getByName("debug").storeFile
+                storePassword = getByName("debug").storePassword
+                keyAlias = getByName("debug").keyAlias
+                keyPassword = getByName("debug").keyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
