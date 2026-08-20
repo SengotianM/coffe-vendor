@@ -47,7 +47,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          path: app/build/outputs/apk/release/app-release.apk
 
   release:
     needs: build
@@ -77,13 +77,13 @@ jobs:
             ## Coffee Vendor App ${{ github.ref_name }}
             
             ### Downloads
-            - **Debug APK**: `app-debug.apk` (for testing, no signing required)
-            - **Release APK**: `app-release-unsigned.apk` (needs signing before install)
+            - **Debug APK**: `app-debug.apk` (for testing, unsigned)
+            - **Release APK**: `app-release.apk` (signed, ready to install)
             
             ### Changes
             See commit history for details.
           files: |
             app-debug.apk
-            app-release-unsigned.apk
+            app-release.apk
           draft: false
           prerelease: false
